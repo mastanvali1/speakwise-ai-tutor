@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SpeakWise AI - English Speaking Practice</title>
+    
+    <!-- Tailwind CSS via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* Base styles and custom design tokens */
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #0A192F;
+            color: #E6F1FF;
+            overflow-x: hidden;
+        }
+
+        /* Canvas Background Styling */
+        #particle-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1; /* Place canvas behind all other content */
+        }
+
+        /* Reusable Glassmorphic Panel Class */
+        .glass-panel {
+            background: rgba(17, 34, 64, 0.75); /* Darker background for better contrast with particles */
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px); /* For Safari */
+            border-radius: 18px;
+            border: 1.5px solid rgba(0, 255, 255, 0.18);
+            box-shadow: 0 6px 32px rgba(0, 0, 0, 0.25);
+            transition: transform 0.3s ease;
+        }
+        .glass-panel:hover {
+            transform: translateY(-5px);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0A192F;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(0, 255, 255, 0.3);
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 255, 255, 0.5);
+        }
+
+        /* Preloader Spinner Animation */
+        .spinner {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            border: 8px solid;
+            border-color: #00FFFF #0000;
+            animation: spinner-anim 1.2s infinite linear;
+        }
+
+        @keyframes spinner-anim {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Page transition classes */
+        .page {
+            transition: opacity 0.7s ease-in-out, transform 0.7s ease-in-out;
+        }
+        .page-hidden {
+            opacity: 0;
+            transform: scale(0.95);
+            pointer-events: none;
+            position: absolute;
+            width: 100%;
+        }
+        .page-visible {
+            opacity: 1;
+            transform: scale(1);
+            position: relative;
+        }
+        
+        /* Hamburger Menu Icon Animation */
+        .hamburger-line {
+            transition: all 0.3s ease-in-out;
+        }
+        .hamburger-open .line-top {
+            transform: rotate(45deg) translateY(8px);
+        }
+        .hamburger-open .line-middle {
+            opacity: 0;
+        }
+        .hamburger-open .line-bottom {
+            transform: rotate(-45deg) translateY(-8px);
+        }
+
+        /* Marquee Ticker Animation */
+        .marquee {
+            overflow: hidden;
+            position: relative;
+        }
+        .marquee-content {
+            display: flex;
+            animation: marquee-scroll 25s linear infinite; /* Increased speed */
+        }
+        .marquee-item {
+            flex-shrink: 0;
+            padding: 0 2rem; /* 32px */
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+        }
+        .marquee-item span {
+            color: #00FFFF;
+            margin-right: 0.75rem; /* 12px */
+            font-size: 1.25rem; /* 20px */
+        }
+
+        @keyframes marquee-scroll {
+            0% {
+                transform: translateX(0);
+            }
+            100% {
+                transform: translateX(-50%);
+            }
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <!-- Canvas element for the particle background -->
+    <canvas id="particle-canvas"></canvas>
+
+    <!-- Preloader -->
+    <div id="preloader" class="page page-visible fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#0A192F]">
+        <div class="spinner"></div>
+        <p class="mt-4 text-lg text-[#00FFFF]">Preparing your AI Tutor...</p>
+    </div>
+    
+    <!-- Logout Loader -->
+    <div id="logout-loader" class="page page-hidden fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#0A192F]">
+        <div class="spinner"></div>
+        <p class="mt-4 text-lg text-red-500">Logging out...</p>
+    </div>
+
+    <!-- Login Page -->
+    <div id="login-page" class="page page-hidden w-full fixed inset-0 z-[90] flex items-center justify-center p-4">
+        <div class="glass-panel w-full max-w-sm p-8 text-center">
+            <h2 class="text-3xl font-bold text-white mb-2">Welcome to <span class="text-[#00FFFF]">SpeakWise</span></h2>
+            <p class="text-slate-300 mb-6">Please log in to continue.</p>
+            <form id="login-form">
+                <div class="mb-4">
+                    <input type="text" id="username" placeholder="Username" class="w-full bg-black/20 border border-slate-600 rounded-lg px-4 py-3 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#00FFFF]">
+                </div>
+                <div class="mb-6">
+                    <input type="password" id="password" placeholder="Password" class="w-full bg-black/20 border border-slate-600 rounded-lg px-4 py-3 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#00FFFF]">
+                </div>
+                <button type="submit" class="w-full bg-[#00FFFF] text-[#0A192F] font-bold py-3 px-8 rounded-lg shadow-lg shadow-[#00FFFF]/20 transform hover:scale-105 transition-all">
+                    Login
+                </button>
+                <p id="login-error" class="text-red-400 h-4 mt-4 text-sm"></p>
+            </form>
+            <div class="mt-6 text-xs text-slate-400 border-t border-slate-700 pt-4">
+                <p>For demonstration purposes, use these credentials:</p>
+                <p class="mt-1"><b class="text-slate-200">Username:</b> admin</p>
+                <p><b class="text-slate-200">Password:</b> password</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Application Wrapper -->
+    <div id="main-app" class="page page-hidden w-full">
+        <!-- Header / Navigation -->
+        <header class="fixed top-0 left-0 w-full z-50 transition-all duration-300">
+            <nav class="container mx-auto px-6 py-4 flex justify-between items-center glass-panel mt-4">
+                <a href="#" class="text-2xl font-bold text-white">SpeakWise <span class="text-[#00FFFF]">AI</span></a>
+                
+                <!-- Desktop Menu -->
+                <div class="hidden md:flex items-center space-x-6">
+                    <a href="#how-it-works" class="nav-link hover:text-[#00FFFF] transition-colors">How It Works</a>
+                    <a href="#practice-space" class="nav-link hover:text-[#00FFFF] transition-colors">Practice Space</a>
+                    <button data-target="support-page" class="page-switcher hover:text-[#00FFFF] transition-colors bg-transparent border-none text-white p-0">Support Us</button>
+                    <a href="#about" class="nav-link hover:text-[#00FFFF] transition-colors">About</a>
+                    <button id="logout-button-desktop" class="bg-red-500/80 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-500 transition-all">Logout</button>
+                </div>
+
+                <!-- Hamburger Menu Button -->
+                <div class="md:hidden">
+                    <button id="hamburger-button" class="z-50 space-y-1.5">
+                        <div class="hamburger-line w-6 h-0.5 bg-white"></div>
+                        <div class="hamburger-line w-6 h-0.5 bg-white"></div>
+                        <div class="hamburger-line w-6 h-0.5 bg-white"></div>
+                    </button>
+                </div>
+            </nav>
+            <!-- Mobile Menu -->
+            <div id="mobile-menu" class="md:hidden hidden absolute top-full right-0 w-full p-4">
+                 <div class="glass-panel flex flex-col items-center space-y-4 p-6 rounded-lg">
+                    <a href="#how-it-works" class="nav-link hover:text-[#00FFFF] transition-colors w-full text-center py-2">How It Works</a>
+                    <button data-target="support-page" class="page-switcher hover:text-[#00FFFF] transition-colors w-full text-center py-2 bg-transparent border-none text-white">Support Us</button>
+                    <a href="#practice-space" class="nav-link hover:text-[#00FFFF] transition-colors w-full text-center py-2">Practice Space</a>
+                    <a href="#about" class="nav-link hover:text-[#00FFFF] transition-colors w-full text-center py-2">About</a>
+                    <button id="logout-button-mobile" class="bg-red-500/80 text-white font-bold py-2 px-8 rounded-lg hover:bg-red-500 transition-all w-full mt-4">Logout</button>
+                </div>
+            </div>
+        </header>
+
+        <main class="container mx-auto px-6 pt-32">
+            <!-- Hero Section -->
+            <section id="home" class="text-center py-20 md:py-32">
+                <h1 class="text-4xl md:text-6xl font-bold leading-tight">
+                    Master English Speaking with Your <br>
+                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#00FFFF] to-[#028CEA]">Personal AI Tutor</span>
+                </h1>
+                <p class="mt-6 text-lg md:text-xl max-w-3xl mx-auto text-slate-300">
+                    Practice real-time conversations, get instant feedback, and build confidence. Your journey to fluency starts here.
+                </p>
+                <a href="#practice-space" class="mt-10 inline-block bg-[#00FFFF] text-[#0A192F] font-bold text-lg py-3 px-8 rounded-lg shadow-lg shadow-[#00FFFF]/20 transform hover:scale-105 transition-all">
+                    Start Practicing Now
+                </a>
+            </section>
+
+            <!-- Animated Ticker Section -->
+            <section class="py-12">
+                <div class="glass-panel marquee py-4">
+                    <div id="marquee-content-container" class="marquee-content">
+                        <!-- Content will be duplicated by JS for seamless loop -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- How It Works Section -->
+            <section id="how-it-works" class="py-20">
+                <h2 class="text-3xl font-bold text-center mb-12">How It Works: A Simple Guide</h2>
+                <div class="grid md:grid-cols-3 gap-8 text-center">
+                    <div class="glass-panel p-8">
+                        <div class="bg-[#0A192F] rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4 border-2 border-[#00FFFF]/50">
+                            <svg class="w-8 h-8 text-[#00FFFF]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg>
+                        </div>
+                        <h3 class="text-xl font-semibold mb-2">1. Speak Naturally</h3>
+                        <p class="text-slate-300">Press the mic button and start speaking. The app captures your voice right from your browser.</p>
+                    </div>
+                    <div class="glass-panel p-8">
+                        <div class="bg-[#0A192F] rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4 border-2 border-[#00FFFF]/50">
+                             <svg class="w-8 h-8 text-[#00FFFF]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                        </div>
+                        <h3 class="text-xl font-semibold mb-2">2. Get AI Responses</h3>
+                        <p class="text-slate-300">Our advanced AI provides natural, intelligent replies, just like a real tutor.</p>
+                    </div>
+                    <div class="glass-panel p-8">
+                        <div class="bg-[#0A192F] rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4 border-2 border-[#00FFFF]/50">
+                            <svg class="w-8 h-8 text-[#00FFFF]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.858 15H4a1 1 0 01-1-1V10a1 1 0 011-1h1.858l4.707-4.707a1 1 0 011.414 0V19.707a1 1 0 01-1.414 0L5.858 15z"></path></svg>
+                        </div>
+                        <h3 class="text-xl font-semibold mb-2">3. Listen & Learn</h3>
+                        <p class="text-slate-300">The AI replies in a clear voice. Listen for pronunciation and context, then reply.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="practice-space" class="py-20">
+                <div class="glass-panel p-4 md:p-8 max-w-4xl mx-auto">
+                    <h2 class="text-3xl font-bold text-center mb-2">Practice Space 💬</h2>
+                    <p id="status-text" class="text-center text-[#00FFFF] h-6 mb-4 transition-opacity">Tap the mic to start speaking</p>
+                    
+                    <div id="chat-log" class="h-96 overflow-y-auto p-4 space-y-4 rounded-lg bg-black/20 mb-6"></div>
+
+                    <div class="flex items-center justify-center space-x-4">
+                        <button id="clear-chat-button" title="Clear Chat" class="bg-slate-700/50 w-16 h-16 rounded-full flex items-center justify-center transition-all duration-300 transform hover:scale-110 hover:bg-slate-600/70">
+                            <svg class="w-8 h-8 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        </button>
+                        <button id="mic-button" title="Start/Stop Listening" class="bg-[#00FFFF] w-20 h-20 rounded-full flex items-center justify-center transition-all duration-300 transform hover:scale-110 shadow-lg shadow-[#00FFFF]/30">
+                            <svg id="mic-icon" class="w-10 h-10 text-[#0A192F]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg>
+                        </button>
+                         <div class="w-16 h-16"></div>
+                    </div>
+                     <p class="mt-4 text-sm text-slate-400 text-center">Your browser will ask for microphone permission.</p>
+                </div>
+            </section>
+
+            <section id="about" class="py-20">
+                <div class="glass-panel p-8 md:p-12 max-w-4xl mx-auto">
+                    <h2 class="text-3xl font-bold text-center mb-8">About This Project</h2>
+                    <div class="space-y-6 text-slate-300">
+                        <div>
+                            <h3 class="font-semibold text-xl text-white mb-2">Technology Stack</h3>
+                            <p>This app is built with <b class="text-[#00FFFF]">HTML5</b>, <b class="text-[#00FFFF]">CSS</b>, <b class="text-[#00FFFF]">Tailwind CSS</b>, and <b class="text-[#00FFFF]">JavaScript</b>. It uses the <b class="font-bold">Gemini API</b> for intelligent conversation and the browser's <b class="font-bold">Web Speech API</b> for voice I/O.</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold text-xl text-white mb-2">API Security Note</h3>
+                            <p>For a production environment, the Gemini API key should not be called directly from the frontend. The best practice is to create a backend proxy (e.g., using Vercel Serverless Functions) that securely stores and uses the API key via Environment Variables, protecting it from public exposure.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer class="border-t border-[#00FFFF]/20 mt-20">
+            <div class="container mx-auto px-6 py-6 text-center text-slate-400">
+                <p>&copy; 2025 SpeakWise AI.</p>
+            </div>
+        </footer>
+    </div>
+    
+    <!-- Support Page -->
+    <div id="support-page" class="page page-hidden fixed inset-0 z-[80] bg-[#0A192F] overflow-y-auto">
+        <div class="container mx-auto px-6 py-32 text-center">
+             <div class="glass-panel p-8 md:p-12 max-w-3xl mx-auto text-center relative">
+                <button id="back-to-app-button" class="absolute top-6 right-6 text-slate-400 hover:text-white transition-colors z-10">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+                <h2 class="text-4xl font-bold text-center mb-4">Enjoying SpeakWise?</h2>
+                <blockquote class="text-slate-300 italic max-w-xl mx-auto mb-6">
+                    "The art of communication is the language of leadership."
+                </blockquote>
+                <p class="text-slate-200 max-w-xl mx-auto mb-8">
+                    This tool is free to use, but not free to run. If you find it valuable, a small contribution helps keep the servers online and supports future development.
+                </p>
+                <div class="bg-white p-4 rounded-lg inline-block">
+                    <!-- IMPORTANT: Replace this placeholder with your actual UPI QR code image URL -->
+                    <img src="/images/qr.jpg" alt="UPI QR Code" class="w-48 h-48">
+                </div>
+                <p class="text-slate-300 mt-4">Scan the QR code to pay ₹9</p>
+                <p class="text-slate-400 mt-6">Or use my UPI ID:</p>
+                <p id="upi-id" class="text-lg font-mono bg-black/20 py-2 px-4 rounded-lg mt-2 inline-block text-white cursor-pointer" title="Click to copy">
+                    9573812983@axl
+                </p>
+                <p id="copy-feedback" class="text-green-400 h-4 mt-2 text-sm opacity-0 transition-opacity">Copied to clipboard!</p>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- Page Elements ---
+            const preloader = document.getElementById('preloader');
+            const logoutLoader = document.getElementById('logout-loader');
+            const loginPage = document.getElementById('login-page');
+            const mainApp = document.getElementById('main-app');
+            const supportPage = document.getElementById('support-page');
+            const loginForm = document.getElementById('login-form');
+            const loginError = document.getElementById('login-error');
+            const clearChatButton = document.getElementById('clear-chat-button');
+            const hamburgerButton = document.getElementById('hamburger-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+            const logoutButtons = [document.getElementById('logout-button-desktop'), document.getElementById('logout-button-mobile')];
+            const pageSwitchers = document.querySelectorAll('.page-switcher');
+            const backToAppButton = document.getElementById('back-to-app-button');
+            const upiIdElement = document.getElementById('upi-id');
+            const copyFeedback = document.getElementById('copy-feedback');
+
+            // --- Canvas Particle Animation ---
+            const canvas = document.getElementById('particle-canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            let particlesArray;
+
+            class Particle {
+                constructor(x, y, directionX, directionY, size) {
+                    this.x = x; this.y = y; this.directionX = directionX; this.directionY = directionY; this.size = size;
+                }
+                draw() {
+                    ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2, false); ctx.fillStyle = 'rgba(0, 255, 255, 0.5)'; ctx.fill();
+                }
+                update() {
+                    if (this.x > canvas.width || this.x < 0) this.directionX = -this.directionX;
+                    if (this.y > canvas.height || this.y < 0) this.directionY = -this.directionY;
+                    this.x += this.directionX; this.y += this.directionY; this.draw();
+                }
+            }
+            function initParticles() {
+                particlesArray = [];
+                let n = (canvas.height * canvas.width) / 9000;
+                for (let i = 0; i < n; i++) {
+                    let s = (Math.random() * 2) + 1;
+                    let x = (Math.random() * ((innerWidth - s * 2) - (s * 2)) + s * 2);
+                    let y = (Math.random() * ((innerHeight - s * 2) - (s * 2)) + s * 2);
+                    let dX = (Math.random() * 0.4) - 0.2;
+                    let dY = (Math.random() * 0.4) - 0.2;
+                    particlesArray.push(new Particle(x, y, dX, dY, s));
+                }
+            }
+            function animateParticles() {
+                requestAnimationFrame(animateParticles);
+                ctx.clearRect(0, 0, innerWidth, innerHeight);
+                for (let i = 0; i < particlesArray.length; i++) particlesArray[i].update();
+                connectParticles();
+            }
+            function connectParticles() {
+                let o;
+                for (let a = 0; a < particlesArray.length; a++) {
+                    for (let b = a; b < particlesArray.length; b++) {
+                        let d = ((particlesArray[a].x - particlesArray[b].x) * (particlesArray[a].x - particlesArray[b].x)) + ((particlesArray[a].y - particlesArray[b].y) * (particlesArray[a].y - particlesArray[b].y));
+                        if (d < (canvas.width / 7) * (canvas.height / 7)) {
+                            o = 1 - (d / 20000);
+                            ctx.strokeStyle = `rgba(0, 255, 255, ${o})`;
+                            ctx.lineWidth = 1;
+                            ctx.beginPath();
+                            ctx.moveTo(particlesArray[a].x, particlesArray[a].y);
+                            ctx.lineTo(particlesArray[b].x, particlesArray[b].y);
+                            ctx.stroke();
+                        }
+                    }
+                }
+            }
+            window.addEventListener('resize', () => {
+                canvas.width = innerWidth;
+                canvas.height = innerHeight;
+                initParticles();
+            });
+            initParticles();
+            animateParticles();
+
+            // --- Marquee Ticker Setup ---
+            const marqueeContainer = document.getElementById('marquee-content-container');
+            const marqueeItems = [{ icon: '🎁', text: 'Completely Free to Use' }, { icon: '🧠', text: 'Advanced AI Tutor Powered by Gemini' }, { icon: '🔒', text: 'Private & Secure Conversations' }, { icon: '🗣️', text: 'Instant Pronunciation Feedback' }, { icon: '📈', text: 'Build Fluency & Confidence' }];
+            const fullMarqueeContent = [...marqueeItems, ...marqueeItems];
+            marqueeContainer.innerHTML = fullMarqueeContent.map(item => `<div class="marquee-item"><span>${item.icon}</span><p>${item.text}</p></div>`).join('');
+
+            // --- App Initialization and Page Transitions ---
+            function showPage(pageElement) {
+                document.querySelectorAll('.page').forEach(p => hidePage(p));
+                pageElement.classList.remove('page-hidden');
+                pageElement.classList.add('page-visible');
+            }
+            function hidePage(pageElement) {
+                pageElement.classList.remove('page-visible');
+                pageElement.classList.add('page-hidden');
+            }
+            function handleLogout() {
+                showPage(logoutLoader);
+                setTimeout(() => {
+                    sessionStorage.removeItem('isLoggedIn');
+                    location.reload();
+                }, 1500);
+            }
+
+            function initializeApp() {
+                // Attach all static event listeners
+                loginForm.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    const username = document.getElementById('username').value;
+                    const password = document.getElementById('password').value;
+                    if (username === 'admin' && password === 'password') {
+                        sessionStorage.setItem('isLoggedIn', 'true');
+                        showPage(mainApp);
+                        initializeChat();
+                    } else {
+                        loginError.textContent = 'Invalid credentials. Please try again.';
+                    }
+                });
+
+                logoutButtons.forEach(btn => btn.addEventListener('click', handleLogout));
+
+                hamburgerButton.addEventListener('click', () => {
+                    mobileMenu.classList.toggle('hidden');
+                    hamburgerButton.classList.toggle('hamburger-open');
+                });
+                
+                pageSwitchers.forEach(switcher => {
+                    switcher.addEventListener('click', (e) => {
+                        const targetId = e.currentTarget.dataset.target;
+                        if (targetId === 'support-page') {
+                            showPage(supportPage);
+                        }
+                        mobileMenu.classList.add('hidden');
+                        hamburgerButton.classList.remove('hamburger-open');
+                    });
+                });
+
+                backToAppButton.addEventListener('click', () => {
+                    showPage(mainApp);
+                });
+
+                upiIdElement.addEventListener('click', () => {
+                    const textToCopy = upiIdElement.innerText;
+                    const tempTextarea = document.createElement('textarea');
+                    tempTextarea.value = textToCopy;
+                    document.body.appendChild(tempTextarea);
+                    tempTextarea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(tempTextarea);
+
+                    copyFeedback.classList.remove('opacity-0');
+                    setTimeout(() => {
+                        copyFeedback.classList.add('opacity-0');
+                    }, 2000);
+                });
+
+                // Check for login session on page load
+                if (sessionStorage.getItem('isLoggedIn') === 'true') {
+                    showPage(mainApp);
+                    hidePage(preloader);
+                    initializeChat();
+                } else {
+                    setTimeout(() => {
+                        hidePage(preloader);
+                        showPage(loginPage);
+                    }, 2500);
+                }
+            }
+
+            initializeApp();
+
+
+            // --- Chat and Speech Logic (Initialized after login) ---
+            let recognition, isListening = false, indianMaleVoice = null, chatHistory = [];
+            const micButton = document.getElementById('mic-button'),
+                micIcon = document.getElementById('mic-icon'),
+                statusText = document.getElementById('status-text'),
+                chatLog = document.getElementById('chat-log');
+
+            function initializeChat() {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                const speechSynthesis = window.speechSynthesis;
+                if (!SpeechRecognition || !speechSynthesis) {
+                    statusText.textContent = "Sorry, your browser doesn't support the Speech API.";
+                    micButton.disabled = true;
+                    return;
+                }
+                recognition = new SpeechRecognition();
+                recognition.lang = 'en-US';
+                recognition.interimResults = false;
+                recognition.continuous = false;
+                const loadVoices = () => {
+                    const voices = speechSynthesis.getVoices();
+                    indianMaleVoice = voices.find(v => v.lang === 'en-IN' && (v.name.toLowerCase().includes('male') || v.name.includes('Rishi'))) || voices.find(v => v.lang === 'en-IN');
+                };
+                speechSynthesis.onvoiceschanged = loadVoices;
+                loadVoices();
+                resetChat();
+                micButton.addEventListener('click', toggleListening);
+                clearChatButton.addEventListener('click', resetChat);
+                recognition.onstart = () => handleRecognitionEvent('start');
+                recognition.onend = () => handleRecognitionEvent('end');
+                recognition.onresult = (event) => handleRecognitionEvent('result', event);
+                recognition.onerror = (event) => handleRecognitionEvent('error', event);
+            }
+
+            function resetChat() {
+                chatLog.innerHTML = '';
+                const welcomeText = "Hello! I'm your AI English tutor. Let's practice. You can start by saying 'hello' or asking me a question.";
+                addAiMessage(welcomeText, false); // No initial voice
+                chatHistory = [];
+            }
+
+            function toggleListening() {
+                if (isListening) {
+                    recognition.stop();
+                } else {
+                    try {
+                        recognition.start();
+                    } catch (error) {
+                        statusText.textContent = "Error starting microphone.";
+                    }
+                }
+            }
+
+            function addUserMessage(text) {
+                chatLog.innerHTML += `<div class="flex justify-end"><div class="bg-white/90 text-[#0A192F] p-3 rounded-lg max-w-md"><p class="font-bold text-sm mb-1">You</p><p>${text}</p></div></div>`;
+                chatLog.scrollTop = chatLog.scrollHeight;
+            }
+
+            function addAiMessage(text, shouldSpeak = true) {
+                chatLog.innerHTML += `<div class="flex justify-start"><div class="bg-gradient-to-r from-[#028CEA] to-[#00FFFF] text-black p-3 rounded-lg max-w-md"><p class="font-bold text-sm mb-1">SpeakWise AI</p><p>${text}</p></div></div>`;
+                chatLog.scrollTop = chatLog.scrollHeight;
+                if (shouldSpeak) speak(text);
+            }
+
+            function speak(text) {
+                speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(text);
+                if (indianMaleVoice) {
+                    utterance.voice = indianMaleVoice;
+                }
+                utterance.lang = 'en-IN';
+                utterance.pitch = 1;
+                utterance.rate = 0.95;
+                utterance.onstart = () => {
+                    statusText.textContent = 'AI is speaking...';
+                    micButton.disabled = true;
+                    micButton.classList.add('opacity-50');
+                };
+                utterance.onend = () => {
+                    statusText.textContent = 'Tap the mic to reply';
+                    micButton.disabled = false;
+                    micButton.classList.remove('opacity-50');
+                };
+                speechSynthesis.speak(utterance);
+            }
+            
+            // --- AI Response Logic ---
+            // Using a simple rule-based AI for local functionality.
+            // To enable Gemini, uncomment the getGeminiResponse function and replace getAIResponse with it in the recognition.onresult handler.
+            function getAIResponse(userInput) {
+                const text = userInput.toLowerCase().trim();
+                if (text.includes('hello') || text.includes('hi')) return 'Hello there! How can I help you practice your English today?';
+                if (text.includes('how are you')) return "I'm just a program, but I'm ready to help you learn! What would you like to talk about?";
+                if (text.includes('what is your name')) return "You can call me SpeakWise AI. I'm here to be your conversation partner.";
+                if (text.includes('thank you')) return "You're very welcome! Is there anything else you'd like to practice?";
+                if (text.includes('goodbye') || text.includes('bye')) return 'Goodbye! It was great practicing with you. Come back anytime!';
+                
+                const fallbacks = [
+                    "That's interesting. Can you tell me more about that?",
+                    "I see. Let's try another topic. What do you do for fun?",
+                    "Could you please rephrase that? I'm still learning. (Note: For advanced answers, please add a Gemini API key).",
+                    "Fascinating. How does that make you feel?",
+                    "Let's practice describing something. Can you describe the room you are in?"
+                ];
+                return fallbacks[Math.floor(Math.random() * fallbacks.length)];
+            }
+
+            /*
+            // --- ADVANCED GEMINI API FUNCTION ---
+            // 1. Get your API key from Google AI Studio.
+            // 2. Uncomment this function.
+            // 3. In the handleRecognitionEvent 'result' case, change getAIResponse(transcript) to getGeminiResponse(transcript).
+            async function getGeminiResponse(prompt) {
+                statusText.textContent = 'AI is thinking...';
+                // 4. PASTE YOUR API KEY HERE
+                const apiKey = "YOUR_GEMINI_API_KEY"; 
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+                
+                // Add a system prompt for better responses
+                if (chatHistory.length === 0) {
+                     chatHistory.push(
+                        { role: "user", parts: [{ text: "You are SpeakWise AI, a friendly and encouraging English tutor for a non-native speaker. Keep your responses concise (2-3 sentences), ask engaging questions, and gently correct any major grammatical errors you notice in the user's input." }] },
+                        { role: "model", parts: [{ text: "Understood. I am SpeakWise AI. Let's begin our English practice!" }] }
+                    );
+                }
+                
+                chatHistory.push({ role: "user", parts: [{ text: prompt }] });
+                const payload = { contents: chatHistory };
+                
+                try {
+                    const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                    if (!response.ok) throw new Error(`API error: ${response.statusText}`);
+                    const result = await response.json();
+                    if (result.candidates && result.candidates.length > 0 && result.candidates[0].content.parts.length > 0) {
+                        const aiText = result.candidates[0].content.parts[0].text;
+                        chatHistory.push({ role: "model", parts: [{ text: aiText }] });
+                        return aiText;
+                    } else {
+                        return "I'm not sure how to respond to that. Could you try asking in a different way?";
+                    }
+                } catch (error) {
+                    console.error("Gemini API Error:", error);
+                    return "I'm having a little trouble connecting right now. Please try again in a moment.";
+                }
+            }
+            */
+
+            function handleRecognitionEvent(eventName, event) {
+                switch (eventName) {
+                    case 'start':
+                        isListening = true;
+                        statusText.textContent = 'Listening...';
+                        micButton.classList.add('bg-red-500', 'animate-pulse');
+                        micIcon.classList.add('text-white');
+                        break;
+                    case 'end':
+                        isListening = false;
+                        statusText.textContent = 'Processing...';
+                        micButton.classList.remove('bg-red-500', 'animate-pulse');
+                        micIcon.classList.remove('text-white');
+                        break;
+                    case 'result':
+                        const transcript = event.results[0][0].transcript;
+                        addUserMessage(transcript);
+                        const aiResponse = getAIResponse(transcript);
+                        addAiMessage(aiResponse);
+                        break;
+                    case 'error':
+                        let msg = 'An error occurred.';
+                        if (event.error === 'not-allowed') {
+                            msg = 'Microphone access was denied.';
+                        } else if (event.error === 'no-speech') {
+                            msg = "I didn't hear anything. Try again.";
+                        }
+                        statusText.textContent = msg;
+                        break;
+                }
+            }
+        });
+    </script>
+
+</body>
+</html>
