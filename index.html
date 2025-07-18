@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SpeakWise AI - English Speaking Practice</title>
     
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3e%3crect width='100' height='100' rx='15' fill='%230A192F'/%3e%3cpath fill='none' stroke='%2300FFFF' stroke-width='10' stroke-linecap='round' d='M 70,25 C 70,15 60,15 50,25 C 40,35 40,45 50,50 C 60,55 60,65 50,75 C 40,85 30,85 30,75'/%3e%3c/svg%3e">
+
     <!-- Tailwind CSS via CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     
@@ -138,6 +141,25 @@
                 transform: translateX(-50%);
             }
         }
+        
+        /* Support Page Button Styles */
+        .upi-btn.active {
+            background-color: #00FFFF;
+            color: #0A192F;
+            border-color: #00FFFF;
+        }
+
+        /* Hidden QR Section Animation */
+        .qr-section {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease-in-out, opacity 0.5s ease-in-out;
+            opacity: 0;
+        }
+        .qr-section-visible {
+            max-height: 500px; /* Adjust as needed */
+            opacity: 1;
+        }
     </style>
 </head>
 <body class="antialiased">
@@ -220,8 +242,33 @@
         </header>
 
         <main class="container mx-auto px-6 pt-32">
+            <!-- PERMANENT REFRESH WARNING -->
+            <section id="refresh-warning-permanent" class="mb-8">
+                <div class="glass-panel p-4 flex flex-col sm:flex-row items-center text-center sm:text-left">
+                    <span class="text-3xl mr-0 sm:mr-4 mb-2 sm:mb-0">⚠️</span>
+                    <div>
+                        <h4 class="font-bold text-yellow-400">Important Note: Session Reset</h4>
+                        <p class="text-sm text-slate-300">If you refresh the page, the AI voice model will reset. For the best experience, please **log out and log back in** to start a new session.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- PERMANENT SUPPORT NOTE -->
+            <section id="support-note" class="mb-12">
+                 <div class="glass-panel p-4 flex flex-col sm:flex-row items-center text-center sm:text-left">
+                    <span class="text-3xl mr-0 sm:mr-4 mb-2 sm:mb-0">☕️</span>
+                    <div class="flex-grow">
+                        <h4 class="font-bold text-cyan-400">Like this tool?</h4>
+                        <p class="text-sm text-slate-300">Your support helps keep this project free and running. Consider buying me a coffee!</p>
+                    </div>
+                    <button data-target="support-page" class="page-switcher mt-4 sm:mt-0 sm:ml-4 bg-gradient-to-r from-pink-500 to-yellow-500 text-white font-bold text-sm py-2 px-4 rounded-lg shadow-lg shadow-yellow-500/20 transform hover:scale-105 transition-all flex-shrink-0">
+                        Support Us
+                    </button>
+                </div>
+            </section>
+
             <!-- Hero Section -->
-            <section id="home" class="text-center py-20 md:py-32">
+            <section id="home" class="text-center py-10 md:py-20">
                 <h1 class="text-4xl md:text-6xl font-bold leading-tight">
                     Master English Speaking with Your <br>
                     <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#00FFFF] to-[#028CEA]">Personal AI Tutor</span>
@@ -230,7 +277,7 @@
                     Practice real-time conversations, get instant feedback, and build confidence. Your journey to fluency starts here.
                 </p>
                 <a href="#practice-space" class="mt-10 inline-block bg-[#00FFFF] text-[#0A192F] font-bold text-lg py-3 px-8 rounded-lg shadow-lg shadow-[#00FFFF]/20 transform hover:scale-105 transition-all">
-                    Start Practicing Now
+                    Start Practicing Free Now
                 </a>
             </section>
 
@@ -279,13 +326,9 @@
                     <div id="chat-log" class="h-96 overflow-y-auto p-4 space-y-4 rounded-lg bg-black/20 mb-6"></div>
 
                     <div class="flex items-center justify-center space-x-4">
-                        <button id="clear-chat-button" title="Clear Chat" class="bg-slate-700/50 w-16 h-16 rounded-full flex items-center justify-center transition-all duration-300 transform hover:scale-110 hover:bg-slate-600/70">
-                            <svg class="w-8 h-8 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                        </button>
                         <button id="mic-button" title="Start/Stop Listening" class="bg-[#00FFFF] w-20 h-20 rounded-full flex items-center justify-center transition-all duration-300 transform hover:scale-110 shadow-lg shadow-[#00FFFF]/30">
                             <svg id="mic-icon" class="w-10 h-10 text-[#0A192F]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg>
                         </button>
-                         <div class="w-16 h-16"></div>
                     </div>
                      <p class="mt-4 text-sm text-slate-400 text-center">Your browser will ask for microphone permission.</p>
                 </div>
@@ -310,35 +353,64 @@
 
         <footer class="border-t border-[#00FFFF]/20 mt-20">
             <div class="container mx-auto px-6 py-6 text-center text-slate-400">
-                <p>&copy; 2025 SpeakWise AI. Upgraded with Gemini.</p>
+                <p>&copy; 2025 SpeakWise AI. Mastan Vali Shaik.</p>
             </div>
         </footer>
     </div>
     
     <!-- Support Page -->
     <div id="support-page" class="page page-hidden fixed inset-0 z-[80] bg-[#0A192F] overflow-y-auto">
-        <div class="container mx-auto px-6 py-32 text-center">
-             <div class="glass-panel p-8 md:p-12 max-w-3xl mx-auto text-center relative">
+        <div class="container mx-auto px-4 sm:px-6 py-20 md:py-32 text-center flex items-center justify-center min-h-screen">
+             <div class="glass-panel p-6 sm:p-8 md:p-12 max-w-4xl mx-auto text-center relative w-full">
                 <button id="back-to-app-button" class="absolute top-6 right-6 text-slate-400 hover:text-white transition-colors z-10">
                     <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
-                <h2 class="text-4xl font-bold text-center mb-4">Enjoying SpeakWise?</h2>
-                <blockquote class="text-slate-300 italic max-w-xl mx-auto mb-6">
-                    "The art of communication is the language of leadership."
-                </blockquote>
-                <p class="text-slate-200 max-w-xl mx-auto mb-8">
-                    This tool is free to use, but not free to run. If you find it valuable, a small contribution helps keep the servers online and supports future development.
-                </p>
-                <div class="bg-white p-4 rounded-lg inline-block">
-                    <!-- IMPORTANT: Replace this placeholder with your actual UPI QR code image URL -->
-                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=upi://pay?pa=your-upi-id@okhdfcbank%26pn=Your%20Name%26am=9.00%26cu=INR%26tn=Coffee%20for%20SpeakWise" alt="UPI QR Code" class="w-48 h-48">
+                <div id="support-initial-view" class="grid md:grid-cols-2 gap-8 md:gap-12 items-center">
+                    <div class="text-center md:text-left">
+                        <h2 class="text-3xl md:text-4xl font-bold mb-4">Support Our Mission</h2>
+                        <p class="text-slate-300 max-w-xl mx-auto md:mx-0 mb-6">
+                           Your contribution helps keep this tool free and accessible for learners everywhere.
+                        </p>
+                        <div class="glass-panel p-4 mb-6 text-left">
+                            <h4 class="font-bold text-cyan-400">How to Support:</h4>
+                            <ol class="list-decimal list-inside text-sm text-slate-300 mt-2 space-y-1">
+                                <li>Click the "Pay with UPI" button to reveal the QR code.</li>
+                                <li>Scan the code with any UPI app on your phone.</li>
+                                <li>Paying amount is your wish Eg:- (even 5 rupees/-)</li>
+                                <li>Confirm the payment securely in your app.</li>
+                                <li>Click the "I have paid" button for confirmation.</li>
+                            </ol>
+                        </div>
+                    </div>
+                    <div class="mt-8 md:mt-0">
+                        <div id="payment-box" class="glass-panel p-6">
+                            <button id="show-upi-button" class="w-full mx-auto upi-btn border border-cyan-400 text-cyan-400 font-bold py-3 px-8 rounded-lg transition-all hover:bg-cyan-400 hover:text-[#0A192F] flex items-center justify-center space-x-2">
+                                <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2.99902C6.48 2.99902 2 7.47902 2 12.999C2 18.519 6.48 22.999 12 22.999C17.52 22.999 22 18.519 22 12.999C22 7.47902 17.52 2.99902 12 2.99902ZM16.4 16.639C15.82 17.049 15.13 17.319 14.39 17.429C13.66 17.539 12.9 17.489 12.19 17.289C11.48 17.089 10.84 16.739 10.31 16.279C9.78 15.819 9.38 15.269 9.14 14.659L11.54 13.619C11.66 14.009 11.89 14.339 12.21 14.579C12.53 14.819 12.91 14.959 13.32 14.959C13.88 14.959 14.34 14.779 14.67 14.439C15 14.099 15.17 13.679 15.17 13.199C15.17 12.719 15 12.319 14.67 11.999C14.34 11.679 13.88 11.499 13.32 11.499H11.88V9.63902H13.23C13.73 9.63902 14.15 9.47902 14.47 9.16902C14.79 8.85902 14.95 8.47902 14.95 8.03902C14.95 7.59902 14.79 7.23902 14.47 6.95902C14.15 6.67902 13.75 6.52902 13.28 6.52902C12.82 6.52902 12.42 6.67902 12.1 6.95902C11.78 7.23902 11.59 7.58902 11.52 7.99902L9.11 7.02902C9.36 6.38902 9.77 5.84902 10.32 5.43902C10.87 5.02902 11.52 4.79902 12.24 4.79902C13.26 4.79902 14.11 5.09902 14.75 5.69902C15.39 6.29902 15.72 7.07902 15.72 8.01902C15.72 8.52902 15.59 8.97902 15.34 9.35902C15.09 9.73902 14.74 10.039 14.32 10.239V10.319C14.88 10.549 15.33 10.899 15.65 11.349C15.97 11.799 16.14 12.339 16.14 12.949C16.14 13.899 15.81 14.699 15.17 15.319C14.53 15.939 13.68 16.279 12.66 16.279C12.36 16.279 12.07 16.249 11.81 16.179L12.39 18.429C13.23 18.559 14.07 18.499 14.88 18.249C15.69 17.999 16.4 17.589 16.97 17.039L16.4 16.639Z" fill="currentColor"/></svg>
+                                <span>Pay with UPI</span>
+                            </button>
+                            <div id="qr-section" class="qr-section text-center mt-6">
+                                <div class="bg-white p-4 rounded-lg inline-block">
+                                    <!-- IMPORTANT: Replace this with your actual QR code image -->
+                                    <img id="upi-qr-code" src="/images/qr.jpg" alt="UPI QR Code" class="w-48 h-48">
+                                </div>
+                                <button id="paid-button" class="mt-6 w-full max-w-xs mx-auto bg-green-500 text-white font-bold py-3 px-8 rounded-lg shadow-lg shadow-green-500/20 transform hover:scale-105 transition-all">
+                                    I have paid
+                                </button>
+                                <div class="mt-4 text-xs text-slate-400 border-t border-slate-700 pt-4">
+                                    <p class="font-bold">A Note on Trust:</p>
+                                    <p>This confirmation is instant and based on the honor system. Thank you for your honesty and support!</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <p class="text-slate-300 mt-4">Scan the QR code to pay ₹9</p>
-                <p class="text-slate-400 mt-6">Or use my UPI ID:</p>
-                <p id="upi-id" class="text-lg font-mono bg-black/20 py-2 px-4 rounded-lg mt-2 inline-block text-white cursor-pointer" title="Click to copy">
-                    your-upi-id@okhdfcbank
-                </p>
-                <p id="copy-feedback" class="text-green-400 h-4 mt-2 text-sm opacity-0 transition-opacity">Copied to clipboard!</p>
+                <div id="support-thanks-view" class="hidden">
+                    <h2 class="text-4xl font-bold text-center mb-4 text-green-400">Payment Received!</h2>
+                    <p class="text-2xl mb-4">🎉</p>
+                    <p class="text-slate-200 max-w-xl mx-auto">
+                        Thank you so much for your support! It means the world and helps keep this project alive. Happy learning!
+                    </p>
+                </div>
             </div>
         </div>
     </div>
@@ -354,7 +426,6 @@
             const supportPage = document.getElementById('support-page');
             const loginForm = document.getElementById('login-form');
             const loginError = document.getElementById('login-error');
-            const clearChatButton = document.getElementById('clear-chat-button');
             const hamburgerButton = document.getElementById('hamburger-button');
             const mobileMenu = document.getElementById('mobile-menu');
             const logoutButtons = [document.getElementById('logout-button-desktop'), document.getElementById('logout-button-mobile')];
@@ -362,6 +433,12 @@
             const backToAppButton = document.getElementById('back-to-app-button');
             const upiIdElement = document.getElementById('upi-id');
             const copyFeedback = document.getElementById('copy-feedback');
+            const showUpiButton = document.getElementById('show-upi-button');
+            const qrSection = document.getElementById('qr-section');
+            const paidButton = document.getElementById('paid-button');
+            const supportInitialView = document.getElementById('support-initial-view');
+            const supportThanksView = document.getElementById('support-thanks-view');
+            const warningPage = document.getElementById('warning-page');
 
             // --- Canvas Particle Animation ---
             const canvas = document.getElementById('particle-canvas');
@@ -434,18 +511,25 @@
 
             // --- App Initialization and Page Transitions ---
             function showPage(pageElement) {
-                document.querySelectorAll('.page').forEach(p => hidePage(p));
-                pageElement.classList.remove('page-hidden');
-                pageElement.classList.add('page-visible');
+                document.querySelectorAll('.page').forEach(p => {
+                    if (p) hidePage(p);
+                });
+                if(pageElement) {
+                    pageElement.classList.remove('page-hidden');
+                    pageElement.classList.add('page-visible');
+                }
             }
             function hidePage(pageElement) {
-                pageElement.classList.remove('page-visible');
-                pageElement.classList.add('page-hidden');
+                 if (pageElement) {
+                    pageElement.classList.remove('page-visible');
+                    pageElement.classList.add('page-hidden');
+                }
             }
             function handleLogout() {
                 showPage(logoutLoader);
                 setTimeout(() => {
                     sessionStorage.removeItem('isLoggedIn');
+                    sessionStorage.removeItem('warningDismissed');
                     location.reload();
                 }, 1500);
             }
@@ -485,22 +569,23 @@
 
                 backToAppButton.addEventListener('click', () => {
                     showPage(mainApp);
+                    // Reset support page view
+                    supportInitialView.style.display = 'grid';
+                    supportThanksView.style.display = 'none';
+                    qrSection.classList.remove('qr-section-visible');
+                    showUpiButton.classList.remove('active');
                 });
 
-                upiIdElement.addEventListener('click', () => {
-                    const textToCopy = upiIdElement.innerText;
-                    const tempTextarea = document.createElement('textarea');
-                    tempTextarea.value = textToCopy;
-                    document.body.appendChild(tempTextarea);
-                    tempTextarea.select();
-                    document.execCommand('copy');
-                    document.body.removeChild(tempTextarea);
-
-                    copyFeedback.classList.remove('opacity-0');
-                    setTimeout(() => {
-                        copyFeedback.classList.add('opacity-0');
-                    }, 2000);
+                showUpiButton.addEventListener('click', () => {
+                    showUpiButton.classList.add('active');
+                    qrSection.classList.add('qr-section-visible');
                 });
+
+                paidButton.addEventListener('click', () => {
+                    supportInitialView.style.display = 'none';
+                    supportThanksView.style.display = 'block';
+                });
+
 
                 // Check for login session on page load
                 if (sessionStorage.getItem('isLoggedIn') === 'true') {
@@ -545,7 +630,6 @@
                 loadVoices();
                 resetChat();
                 micButton.addEventListener('click', toggleListening);
-                clearChatButton.addEventListener('click', resetChat);
                 recognition.onstart = () => handleRecognitionEvent('start');
                 recognition.onend = () => handleRecognitionEvent('end');
                 recognition.onresult = (event) => handleRecognitionEvent('result', event);
