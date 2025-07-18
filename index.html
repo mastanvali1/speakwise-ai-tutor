@@ -297,7 +297,7 @@
                     <div class="space-y-6 text-slate-300">
                         <div>
                             <h3 class="font-semibold text-xl text-white mb-2">Technology Stack</h3>
-                            <p>This app is built with <b class="text-[#00FFFF]">HTML5</b>, <b class="text-[#00FFFF]">CSS</b>, <b class="text-[#00FFFF]">Tailwind CSS</b>, and <b class="text-[#00FFFF]">JavaScript</b>. It uses the <b class="font-bold">Gemini API</b> for intelligent conversation and the browser's <b class="font-bold">Web Speech API</b> for voice I/O.</p>
+                            <p>This app is built with <b class="text-[#00FFFF]">HTML5</b>, <b class="text-[#00FFFF]">Canvas</b>, <b class="text-[#00FFFF]">Tailwind CSS</b>, and <b class="text-[#00FFFF]">JavaScript</b>. It uses the <b class="font-bold">Gemini API</b> for intelligent conversation and the browser's <b class="font-bold">Web Speech API</b> for voice I/O.</p>
                         </div>
                         <div>
                             <h3 class="font-semibold text-xl text-white mb-2">API Security Note</h3>
@@ -310,7 +310,7 @@
 
         <footer class="border-t border-[#00FFFF]/20 mt-20">
             <div class="container mx-auto px-6 py-6 text-center text-slate-400">
-                <p>&copy; 2025 SpeakWise AI.</p>
+                <p>&copy; 2025 SpeakWise AI. Upgraded with Gemini.</p>
             </div>
         </footer>
     </div>
@@ -331,12 +331,12 @@
                 </p>
                 <div class="bg-white p-4 rounded-lg inline-block">
                     <!-- IMPORTANT: Replace this placeholder with your actual UPI QR code image URL -->
-                    <img src="/images/qr.jpg" alt="UPI QR Code" class="w-48 h-48">
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=upi://pay?pa=your-upi-id@okhdfcbank%26pn=Your%20Name%26am=9.00%26cu=INR%26tn=Coffee%20for%20SpeakWise" alt="UPI QR Code" class="w-48 h-48">
                 </div>
                 <p class="text-slate-300 mt-4">Scan the QR code to pay ₹9</p>
                 <p class="text-slate-400 mt-6">Or use my UPI ID:</p>
                 <p id="upi-id" class="text-lg font-mono bg-black/20 py-2 px-4 rounded-lg mt-2 inline-block text-white cursor-pointer" title="Click to copy">
-                    9573812983@axl
+                    your-upi-id@okhdfcbank
                 </p>
                 <p id="copy-feedback" class="text-green-400 h-4 mt-2 text-sm opacity-0 transition-opacity">Copied to clipboard!</p>
             </div>
@@ -605,37 +605,10 @@
             }
             
             // --- AI Response Logic ---
-            // Using a simple rule-based AI for local functionality.
-            // To enable Gemini, uncomment the getGeminiResponse function and replace getAIResponse with it in the recognition.onresult handler.
-            function getAIResponse(userInput) {
-                const text = userInput.toLowerCase().trim();
-                if (text.includes('hello') || text.includes('hi')) return 'Hello there! How can I help you practice your English today?';
-                if (text.includes('how are you')) return "I'm just a program, but I'm ready to help you learn! What would you like to talk about?";
-                if (text.includes('what is your name')) return "You can call me SpeakWise AI. I'm here to be your conversation partner.";
-                if (text.includes('thank you')) return "You're very welcome! Is there anything else you'd like to practice?";
-                if (text.includes('goodbye') || text.includes('bye')) return 'Goodbye! It was great practicing with you. Come back anytime!';
-                
-                const fallbacks = [
-                    "That's interesting. Can you tell me more about that?",
-                    "I see. Let's try another topic. What do you do for fun?",
-                    "Could you please rephrase that? I'm still learning. (Note: For advanced answers, please add a Gemini API key).",
-                    "Fascinating. How does that make you feel?",
-                    "Let's practice describing something. Can you describe the room you are in?"
-                ];
-                return fallbacks[Math.floor(Math.random() * fallbacks.length)];
-            }
-
-            /*
-            // --- ADVANCED GEMINI API FUNCTION ---
-            // 1. Get your API key from Google AI Studio.
-            // 2. Uncomment this function.
-            // 3. In the handleRecognitionEvent 'result' case, change getAIResponse(transcript) to getGeminiResponse(transcript).
-            async function getGeminiResponse(prompt) {
+            async function getAIResponse(prompt) {
                 statusText.textContent = 'AI is thinking...';
-                // 4. PASTE YOUR API KEY HERE
-                const apiKey = "YOUR_GEMINI_API_KEY"; 
-                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
-                
+                const localApiUrl = '/api/chat';
+
                 // Add a system prompt for better responses
                 if (chatHistory.length === 0) {
                      chatHistory.push(
@@ -645,25 +618,34 @@
                 }
                 
                 chatHistory.push({ role: "user", parts: [{ text: prompt }] });
-                const payload = { contents: chatHistory };
+                const payload = { chatHistory: chatHistory };
                 
                 try {
-                    const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-                    if (!response.ok) throw new Error(`API error: ${response.statusText}`);
+                    const response = await fetch(localApiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) {
+                         throw new Error(`API proxy error: ${response.statusText}`);
+                    }
+
                     const result = await response.json();
+                    
                     if (result.candidates && result.candidates.length > 0 && result.candidates[0].content.parts.length > 0) {
                         const aiText = result.candidates[0].content.parts[0].text;
                         chatHistory.push({ role: "model", parts: [{ text: aiText }] });
                         return aiText;
                     } else {
+                        // This handles cases where the API returns a valid response, but no content
                         return "I'm not sure how to respond to that. Could you try asking in a different way?";
                     }
                 } catch (error) {
-                    console.error("Gemini API Error:", error);
-                    return "I'm having a little trouble connecting right now. Please try again in a moment.";
+                    console.error("API proxy error:", error);
+                    return "I'm having a little trouble connecting to the AI. Please check the API key and deployment settings.";
                 }
             }
-            */
 
             function handleRecognitionEvent(eventName, event) {
                 switch (eventName) {
@@ -682,8 +664,7 @@
                     case 'result':
                         const transcript = event.results[0][0].transcript;
                         addUserMessage(transcript);
-                        const aiResponse = getAIResponse(transcript);
-                        addAiMessage(aiResponse);
+                        getAIResponse(transcript).then(addAiMessage);
                         break;
                     case 'error':
                         let msg = 'An error occurred.';
